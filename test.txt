@@ -1,0 +1,20 @@
++-----------------------+  +------------------------+  +------------------------+
+|  0.8-11 Solar Masses  |  |   11-50 Solar Masses   |  |    >50 Solar Masses    |
++-----------------------+  +------------------------+  +------------------------+
+|   Main sequence star  |  |   Main sequence star   |  |  Main sequence O star  |
+|    (B, A, F, or G)    |  |        (O or B)        |  |                        |
+|           +-----------+  |           +------------+  |           +------------+
+|           |           |  |           |            |  |           |            |
+|           v           |  |           v            |  |           v            |
+|       Red giant       |  | Red or blue supergiant |  |     Wolf-Rayet Star    |
+|      with He core     |  |      with He core      |  |           +------------+
+|           +-----------+  |           +------------+  |           |            |
+|           |           |  |           |               |           v            |
+|           v           |  |    Planetary nebula    |  |    Type Ib Supernova   |
+|  Red supergiant with  |  |                        |  |           +------------+
+|  carbon-oxygen core   |  |           +------------+  |           |            |
+|           +-----------+  |           |            |  |           v            |
+|           |           |  |           v            |  |      Black Hole        |
+|           v           |  |     Red supergiant     |  |                        |
+|        White Dwarf    |  |     with iron core     |  |                        |
++-----------------------+  +------------------------+  +------------------------+
