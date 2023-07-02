@@ -28,26 +28,26 @@ params={
 }
 matplotlib.rcParams.update(params)
 
-def query_ned(objname):
+def query_ned(objname, radius=0.6):
     result_table = Ned.query_object(objname)
     ra = result_table['RA'][0]
     dec = result_table['DEC'][0]
-    ra_start = round(ra - 0.6, 2)
-    ra_end = round(ra + 0.6, 2)
-    dec_start = round(dec - 0.6, 2)
-    dec_end = round(dec + 0.6, 2)
+    ra_start = round(ra - radius, 2)
+    ra_end = round(ra + radius, 2)
+    dec_start = round(dec - radius, 2)
+    dec_end = round(dec + radius, 2)
     return ra_start, ra_end, dec_start, dec_end
 
 def query_gaia(objname='', parallax_start = 0, parralax_end = 10000, 
           pmra_start = -1000, pmra_end = 1000,
-          pmdec_start = -1000, pmdec_end = 1000, ra=0., dec=0.):
+          pmdec_start = -1000, pmdec_end = 1000, ra=0., dec=0., ruwe=100, radius=0.6):
     try:
-        ra_start, ra_end, dec_start, dec_end = query_ned(objname)
+        ra_start, ra_end, dec_start, dec_end = query_ned(objname, radius)
     except:
-        ra_start = ra - 0.6
-        ra_end = ra + 0.6
-        dec_start = dec - 0.6
-        dec_end = dec + 0.6
+        ra_start = ra - radius
+        ra_end = ra + radius
+        dec_start = dec - radius
+        dec_end = dec + radius
       # Query Gaia database
     query = '''SELECT top 10000 \
     source_id, ra, dec, parallax, phot_g_mean_mag, \
@@ -61,9 +61,10 @@ def query_gaia(objname='', parallax_start = 0, parralax_end = 10000,
     and parallax between {} and {} \
     and pmra between {} and {} \
     and pmdec between {} and {} \
+    and ruwe < {} \
     order by parallax desc'''.format(ra_start, ra_end, dec_start, dec_end, 
                                  parallax_start, parralax_end, pmra_start, 
-                                 pmra_end, pmdec_start, pmdec_end)
+                                 pmra_end, pmdec_start, pmdec_end, ruwe)
     job = Gaia.launch_job_async(query)
     r = job.get_results()
     return r
@@ -118,37 +119,38 @@ def plot_pm(objname, parallax_start, parallax_end, clip=0.5, ra=0., dec=0.):
     plt.title(f'Proper Motion of {objname}', pad=10, fontsize=15)
     return r
 
-def hr_diag(objname, r):
+def hr_diag(objname, r, plot=True):
     dist = 1000/r['parallax']
     abs_mag = r['phot_g_mean_mag'] - 5*np.log10(dist) + 5
     bprp = r['phot_bp_mean_mag'] - r['phot_rp_mean_mag']
-    abs_mag = np.array([abs_mag[i] for i in range(len(abs_mag)) if bprp[i]!=np.nan])
-    bprp = np.array([i for i in bprp if i!=np.nan])
+    abs_mag = abs_mag[~np.isnan(bprp)]
+    bprp = bprp[~np.isnan(bprp)]
     stack = np.vstack((np.copy(bprp), np.copy(abs_mag)))
     kde = gaussian_kde(stack)(stack)
-    plt.figure(figsize=(6,7), dpi=300)
-    plt.title(f'HR Diagram of {objname}', pad=10, fontsize=15)
-    plt.xlabel('BP-RP')
-    plt.ylabel('Absolute Magnitude in G band')
-    plt.scatter(bprp, abs_mag, c=kde, s=0.2, cmap='gist_heat')
-    plt.colorbar(label='Density')
-    # plt.ylim(-2, 15)
-    plt.vlines(-0.6, 15, -2, color='slateblue',  label='O', linewidth=0.5)
-    plt.vlines(-0.4, 15, -2, color='slateblue',  label='B', linewidth=0.5)
-    plt.vlines(0.0, 15, -2, color='slateblue',  label='A', linewidth=0.5)
-    plt.vlines(0.38, 15, -2, color='slateblue',  label='F', linewidth=0.5)
-    plt.vlines(0.74, 15, -2, color='slateblue',  label='G', linewidth=0.5)
-    plt.vlines(1.13, 15, -2, color='slateblue',  label='K', linewidth=0.5)
-    plt.vlines(2.31, 15, -2, color='slateblue',  label='M', linewidth=0.5)
-    plt.vlines(4.3, 15, -2, color='slateblue',  label='END', linewidth=0.5)
-    plt.text(-0.55, -1.6, 'O', fontsize=8)
-    plt.text(-0.25, -1.6, 'B', fontsize=8)
-    plt.text(0.14, -1.6, 'A', fontsize=8)
-    plt.text(0.51, -1.6, 'F', fontsize=8)
-    plt.text(0.885, -1.6, 'G', fontsize=8)
-    plt.text(1.67, -1.6, 'K', fontsize=8)
-    plt.text(3.355, -1.6, 'M', fontsize=8)
-    plt.gca().invert_yaxis()
+    if plot:
+        plt.figure(figsize=(6,7), dpi=300)
+        plt.title(f'HR Diagram of {objname}', pad=10, fontsize=15)
+        plt.xlabel('BP-RP')
+        plt.ylabel('Absolute Magnitude in G band')
+        plt.scatter(bprp, abs_mag, c=kde, s=0.2, cmap='gist_heat')
+        plt.colorbar(label='Density')
+        plt.ylim(-3, 15)
+        plt.vlines(-0.6, 15, -2, color='slateblue',  label='O', linewidth=0.5)
+        plt.vlines(-0.4, 15, -2, color='slateblue',  label='B', linewidth=0.5)
+        plt.vlines(0.0, 15, -2, color='slateblue',  label='A', linewidth=0.5)
+        plt.vlines(0.38, 15, -2, color='slateblue',  label='F', linewidth=0.5)
+        plt.vlines(0.74, 15, -2, color='slateblue',  label='G', linewidth=0.5)
+        plt.vlines(1.13, 15, -2, color='slateblue',  label='K', linewidth=0.5)
+        plt.vlines(2.31, 15, -2, color='slateblue',  label='M', linewidth=0.5)
+        plt.vlines(4.3, 15, -2, color='slateblue',  label='END', linewidth=0.5)
+        plt.text(-0.55, -1.6, 'O', fontsize=8)
+        plt.text(-0.25, -1.6, 'B', fontsize=8)
+        plt.text(0.14, -1.6, 'A', fontsize=8)
+        plt.text(0.51, -1.6, 'F', fontsize=8)
+        plt.text(0.885, -1.6, 'G', fontsize=8)
+        plt.text(1.67, -1.6, 'K', fontsize=8)
+        plt.text(3.355, -1.6, 'M', fontsize=8)
+        plt.gca().invert_yaxis()
     return bprp, abs_mag
 
 def perc_in_spec_class(objname, bprp):
@@ -172,11 +174,11 @@ def plot_all(objname):
     perc_in_spec_class(objname, bprp)
     plt.show()
     
-def sample_from_isochrone(isochrone_file="/home/ravioli/astro/ksp/gaia/isochrone.dat", n_samples=50):
+def sample_from_isochrone(isochrone_file="/home/ravioli/astro/ksp/gaia/isochrone.dat", n_samples=50, plot=True, filter=True):
     isochrone = pd.read_csv(isochrone_file, sep='\s+')
     isochrone = pd.DataFrame(isochrone)
     #filtering red giants 
-    isochrone = isochrone[isochrone['logg'] > 3]
+    if filter: isochrone = isochrone[isochrone['logg'] > 3]
     bprp = np.array(isochrone['G_BPmag'] - isochrone['G_RPmag'])
     g = np.array(isochrone['Gmag'])
     random_index = np.random.randint(0, len(isochrone), n_samples)
@@ -184,17 +186,18 @@ def sample_from_isochrone(isochrone_file="/home/ravioli/astro/ksp/gaia/isochrone
     bprp_new = np.array(isochrone_new['G_BPmag'] - isochrone_new['G_RPmag'])
     g_new = np.array(isochrone_new['Gmag'])
 
-    plt.figure(figsize=(6,6))
-    plt.scatter(bprp, g, s=1.5, c='slateblue', label='All stars')
-    plt.scatter(bprp_new, g_new, s=1.5, c='salmon', label=f'Randomly selected {n_samples} stars')
-    plt.gca().invert_yaxis()
-    plt.xlabel('BP-RP')
-    plt.ylabel('G')
-    plt.title('Gaia DR3 isochrone')
-    plt.legend()
-    plt.show()
+    if plot:
+        plt.figure(figsize=(6,6))
+        plt.scatter(bprp, g, s=1.5, c='slateblue', label='All stars')
+        plt.scatter(bprp_new, g_new, s=1.5, c='salmon', label=f'Randomly selected {n_samples} stars')
+        plt.gca().invert_yaxis()
+        plt.xlabel('BP-RP')
+        plt.ylabel('G')
+        plt.title('Gaia DR3 isochrone')
+        plt.legend()
+        plt.show()
     
-    return isochrone_new
+    return isochrone_new, bprp, g, isochrone
 
 def powerlaw(x, a, gamma):
     return a*(x)**(-gamma)
