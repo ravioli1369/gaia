@@ -102,6 +102,7 @@ def plot_appmag_vs_dist(objname, r):
     plt.xlabel("log$_{10}$[Distance] (parsecs)")
     plt.title(f"Apparent Magnitude vs Distance for {objname}", pad=10, fontsize=15)
     plt.ylabel("Apparent Magnitude in G band")
+    plt.savefig(f"{objname}_appmag.png")
     return dist
 
 
@@ -120,6 +121,9 @@ def gauss_fit(objname, dist):
     plt.hist(dist, bins=100, label="Data", color="slateblue")
     plt.title(f"Distance Distribution of {objname}", pad=10, fontsize=15)
     plt.legend()
+    plt.xlabel("Distance (parsecs)")
+    plt.ylabel("Number of stars")
+    plt.savefig(f"{objname}_histfit.png")
     return popt
 
 
@@ -157,6 +161,7 @@ def plot_pm(objname, parallax_start, parallax_end, clip=0.5, ra=0.0, dec=0.0):
     plt.xlim(xlim)
     plt.ylim(ylim)
     plt.title(f"Proper Motion of {objname}", pad=10, fontsize=15)
+    plt.savefig(f"{objname}_pm.png")
     return r
 
 
@@ -175,7 +180,7 @@ def hr_diag(objname, r, plot=True):
         plt.ylabel("Absolute Magnitude in G band")
         plt.scatter(bprp, abs_mag, c=kde, s=0.2, cmap="gist_heat")
         plt.colorbar(label="Density")
-        plt.ylim(-3, 15)
+        plt.ylim(-2, 15)
         plt.vlines(-0.6, 15, -2, color="slateblue", label="O", linewidth=0.5)
         plt.vlines(-0.4, 15, -2, color="slateblue", label="B", linewidth=0.5)
         plt.vlines(0.0, 15, -2, color="slateblue", label="A", linewidth=0.5)
@@ -192,6 +197,7 @@ def hr_diag(objname, r, plot=True):
         plt.text(1.67, -1.6, "K", fontsize=8)
         plt.text(3.355, -1.6, "M", fontsize=8)
         plt.gca().invert_yaxis()
+        plt.savefig(f"{objname}_hr.png")
     return bprp, abs_mag
 
 
